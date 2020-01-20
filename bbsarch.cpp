@@ -201,8 +201,6 @@ void bbsarch_get_file(char* bbs_fn, char* file_fn, char* file_name) {
 			}
 			extract_size -= read;
 		}
-	} else {
-		printf("File not found!");
 	}
 	
 	fclose(bbs_f);
