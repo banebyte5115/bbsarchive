@@ -38,6 +38,7 @@ ushort bbsarch_hashfunc(char* name, uint bbs_hsize) {
 }
 
 void bbsarch_create(char* bbs_fn, uint bbs_id, uint bbs_hsize) {
+	
 	// creating header
 	BBSHeader header;
 	header.version = BBS_VERSION;
@@ -45,23 +46,30 @@ void bbsarch_create(char* bbs_fn, uint bbs_id, uint bbs_hsize) {
 	header.id = bbs_id;
 	header.hashmax = bbs_hsize;
 	header.htsize = 0;
+	
 	// creating file
 	FILE* bbs_f = fopen(bbs_fn, "wb");
 	fwrite(&header, sizeof(BBSHeader), 1, bbs_f);
 	fclose(bbs_f);
+	
 }
 
 void bbsarch_add_file(char* bbs_fn, char* file_fn, char* file_name, uchar file_flag) {
+	
 	// creating header
 	BBSHeader header;
+	
 	// opening files
 	FILE* bbs_f = fopen(bbs_fn, "rb+");
 	FILE* file_f = fopen(file_fn, "rb");
+	
 	// reading header
 	fread(&header, sizeof(BBSHeader), 1, bbs_f);
+	
 	// allocating memory for hashtable
 	BBSHashSlot* ht = (BBSHashSlot*)malloc(sizeof(BBSHashSlot) * header.hashmax);
 	memset(ht, 0, sizeof(BBSHashSlot) * header.hashmax);
+	
 	// reading hashtable
 	uint read_size = 0;
 	while (read_size < header.htsize) {
@@ -74,6 +82,7 @@ void bbsarch_add_file(char* bbs_fn, char* file_fn, char* file_name, uchar file_f
 		read_size += fread(&slot.size, 1, 4, bbs_f);
 		ht[slot.htpos] = slot;
 	}
+	
 	// copying all data after the hashtable
 	uint cur_pos = ftell(bbs_f);
 	uint file_size = file_get_size2(bbs_f);
@@ -81,6 +90,7 @@ void bbsarch_add_file(char* bbs_fn, char* file_fn, char* file_name, uchar file_f
 	uint to_copy = file_size - cur_pos;
 	uchar* cpybuff = (uchar*)malloc(to_copy);
 	fread(cpybuff, 1, to_copy, bbs_f);
+	
 	// checking whether new entry is passed (to add size of hashtable)
 	ushort hv = bbsarch_hashfunc(file_name, header.hashmax);
 	if (ht[hv].namelen == 0) {
@@ -92,6 +102,7 @@ void bbsarch_add_file(char* bbs_fn, char* file_fn, char* file_name, uchar file_f
 		ht[hv].offset = to_copy;
 		ht[hv].size = file_get_size2(file_f);
 	}
+	
 	// writing header
 	header.files += 1;
 	fseek(bbs_f, 0, SEEK_SET);
@@ -106,20 +117,24 @@ void bbsarch_add_file(char* bbs_fn, char* file_fn, char* file_name, uchar file_f
 			fwrite(&ht[i].size, 4, 1, bbs_f);
 		}
 	}
+	
 	// writing all data after the hashtable
 	fwrite(cpybuff, 1, to_copy, bbs_f);
+	
 	// creating file record
 	FileRecord record;
 	record.size = file_get_size2(file_f);
 	record.namelen = strlen(file_name);
 	record.name = file_name;
 	record.flag = file_flag;
+	
 	// writing file record
 	fseek(bbs_f, 0, SEEK_END);
 	fwrite(&record.size, 4, 1, bbs_f);
 	fwrite(&record.namelen, 1, 1, bbs_f);
 	fwrite(record.name, 1, record.namelen, bbs_f);
 	fwrite(&record.flag, 1, 1, bbs_f);
+	
 	// writing file data
 	uchar* buff = new uchar[512 * 1024];
 	uint read = 0;
@@ -128,19 +143,25 @@ void bbsarch_add_file(char* bbs_fn, char* file_fn, char* file_name, uchar file_f
 	}
 	fclose(bbs_f);
 	fclose(file_f);
+	
 }
 
 void bbsarch_get_file(char* bbs_fn, char* file_fn, char* file_name) {
+	
 	// creating header
 	BBSHeader header;
+	
 	// opening files
 	FILE* bbs_f = fopen(bbs_fn, "rb");
 	FILE* file_f = fopen(file_fn, "wb");
+	
 	// reading header
 	fread(&header, sizeof(BBSHeader), 1, bbs_f);
+	
 	// allocating memory for hashtable
 	BBSHashSlot* ht = (BBSHashSlot*)malloc(sizeof(BBSHashSlot) * header.hashmax);
 	memset(ht, 0, sizeof(BBSHashSlot) * header.hashmax);
+	
 	// reading hashtable
 	uint read_size = 0;
 	while (read_size < header.htsize) {
@@ -153,6 +174,7 @@ void bbsarch_get_file(char* bbs_fn, char* file_fn, char* file_name) {
 		read_size += fread(&slot.size, 1, 4, bbs_f);
 		ht[slot.htpos] = slot;
 	}
+	
 	// searching in hashtable
 	ushort hv = bbsarch_hashfunc(file_name, header.hashmax);
 	char found_flag = 0;
@@ -186,6 +208,7 @@ void bbsarch_get_file(char* bbs_fn, char* file_fn, char* file_name) {
 			}
 		}
 	}
+	
 	// if found match
 	if (found_flag) {
 		// extracting data
@@ -205,4 +228,5 @@ void bbsarch_get_file(char* bbs_fn, char* file_fn, char* file_name) {
 	
 	fclose(bbs_f);
 	fclose(file_f);
+	
 }
