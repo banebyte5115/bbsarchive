@@ -1,6 +1,10 @@
 # BBS Archive v1.0.1
 Data format for storing files.
 
+# Versions
+1.0.1
+- Added hashtable
+
 # License
 The MIT License (MIT)
 
